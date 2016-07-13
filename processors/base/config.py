@@ -29,4 +29,5 @@ if os.environ.get('LOGGING_URL', None):
 # OSF
 
 OSF_URL = os.environ.get('OSF_URL', None)
-OSF_TOKEN = os.environ.get('OSF_TOKEN', None)
+OSF_KEY = os.environ.get('OSF_KEY', None)
+OSF_NAMESPACE = os.environ.get('OSF_NAMESPACE', None)
