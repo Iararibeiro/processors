@@ -112,7 +112,6 @@ def extract_locations(record):
         })
     return locations
 
-
 def extract_organisations(record):
     organisations = []
     for element in record['sponsors'] or []:

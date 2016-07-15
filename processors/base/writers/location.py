@@ -7,6 +7,12 @@ from __future__ import unicode_literals
 import uuid
 import logging
 import datetime
+
+from iso3166 import countries
+from fuzzywuzzy import fuzz
+import os
+import csv
+
 from .. import readers
 from .. import helpers
 logger = logging.getLogger(__name__)
@@ -34,7 +40,7 @@ def write_location(conn, location, source_id, trial_id=None):
     timestamp = datetime.datetime.utcnow()
 
     # Get name
-    name = helpers.clean_string(location['name'])
+    name = helpers.clean_string(extract_CanonicalName(location['name']))
     if len(name) <= 1:
         return None
 
@@ -70,3 +76,26 @@ def write_location(conn, location, source_id, trial_id=None):
             'created' if create else 'updated', name)
 
     return object['id']
+
+#----helper function to get the canonical name of the locations
+def extract_CanonicalName(location):
+    try:
+        canonical_name = countries.get(location).name
+        logger.debug('Location - %s: %s','normalized', canonical_name)
+    except KeyError:
+        canonical_name = location
+        # This part is for looking for matching cases (suggestion), uses the 
+        # fuzzy logic to get the country name who get 80% of match rate.
+        with open(os.path.join(os.path.dirname(__file__),'countries.csv'), 'r') as f:
+            countries_data = csv.reader(f, delimiter= str(u','))
+            logger.debug('Location - %s: %s','not normalized', canonical_name)
+
+            for country in countries_data:
+                unicode_row = [x.decode('utf8') for x in country]
+                if (fuzz.ratio(location, unicode_row) > 80):
+                    canonical_name = countries.get(country[1]).name
+                    logger.debug('Location - %s: %s','not normalized with the most close result', canonical_name)
+
+        
+
+    return canonical_name
