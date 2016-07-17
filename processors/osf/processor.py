@@ -23,7 +23,7 @@ def process(conf, conn):
 
     # Export tables
     # http://jamdb.readthedocs.io/en/latest/index.html
-    token_ttl_seconds = 30*60 # api has limit 60*60 seconds
+    token_ttl_seconds = 30*60  # api has limit 60*60 seconds
     token_issued_time = datetime.datetime.now()
     session = requests.Session()
     for table in TABLES:
