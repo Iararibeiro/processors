@@ -40,7 +40,7 @@ def write_location(conn, location, source_id, trial_id=None):
     timestamp = datetime.datetime.utcnow()
 
     # Get name
-    name = helpers.clean_string(extract_CanonicalName(location['name']))
+    name = extract_CanonicalName(helpers.clean_string(location['name']))
     if len(name) <= 1:
         return None
 
@@ -79,8 +79,9 @@ def write_location(conn, location, source_id, trial_id=None):
 
 #----helper function to get the canonical name of the locations
 def extract_CanonicalName(location):
+    location_name = location.lower().strip().replace(".", "")
     try:
-        canonical_name = countries.get(location).name
+        canonical_name = countries.get(location_name).name
         logger.debug('Location - %s: %s','normalized', canonical_name)
     except KeyError:
         canonical_name = location
@@ -89,13 +90,13 @@ def extract_CanonicalName(location):
         with open(os.path.join(os.path.dirname(__file__),'countries.csv'), 'r') as f:
             countries_data = csv.reader(f, delimiter= str(u','))
             logger.debug('Location - %s: %s','not normalized', canonical_name)
-
+            best_similarity = 0
             for country in countries_data:
                 unicode_row = [x.decode('utf8') for x in country]
-                if (fuzz.ratio(location, unicode_row) > 80):
-                    canonical_name = countries.get(country[1]).name
+                country_name = unicode_row[0].lower().strip().replace(".", "")
+                if ((fuzz.ratio(location_name, country_name) >= 80) and 
+                    (fuzz.ratio(location_name, country_name) > best_similarity)):
+                    canonical_name = countries.get(unicode_row[3]).name
                     logger.debug('Location - %s: %s','not normalized with the most close result', canonical_name)
-
-        
-
+    
     return canonical_name
