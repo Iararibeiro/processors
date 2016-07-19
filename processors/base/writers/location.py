@@ -90,13 +90,14 @@ def extract_CanonicalName(location):
         with open(os.path.join(os.path.dirname(__file__),'countries.csv'), 'r') as f:
             countries_data = csv.reader(f, delimiter= str(u','))
             logger.debug('Location - %s: %s','not normalized', canonical_name)
-            best_similarity = 0
+            best_similarity = 80
             for country in countries_data:
                 unicode_row = [x.decode('utf8') for x in country]
                 country_name = unicode_row[0].lower().strip().replace(".", "")
-                if ((fuzz.ratio(location_name, country_name) >= 80) and 
-                    (fuzz.ratio(location_name, country_name) > best_similarity)):
+                similarity = fuzz.ratio(location_name, country_name)
+                if (similarity >= best_similarity):
+                    best_similarity = similarity
                     canonical_name = countries.get(unicode_row[3]).name
-                    logger.debug('Location - %s: %s','not normalized with the most close result', canonical_name)
+                    logger.debug('Location - %s: %s','not normalized, using the most similar name', canonical_name)
     
     return canonical_name
