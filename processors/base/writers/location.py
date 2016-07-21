@@ -40,7 +40,7 @@ def write_location(conn, location, source_id, trial_id=None):
     timestamp = datetime.datetime.utcnow()
 
     # Get name
-    name = extract_CanonicalName(helpers.clean_string(location['name']))
+    name = normalize_location(helpers.clean_string(location['name']))
     if len(name) <= 1:
         return None
 
@@ -78,26 +78,35 @@ def write_location(conn, location, source_id, trial_id=None):
     return object['id']
 
 #----helper function to get the canonical name of the locations
-def extract_CanonicalName(location):
+def normalize_location(location):
     location_name = location.lower().strip().replace(".", "")
     try:
         canonical_name = countries.get(location_name).name
-        logger.debug('Location - %s: %s','normalized', canonical_name)
+        logger.debug('Location - %s: %s normalized', location_name, canonical_name)
     except KeyError:
         canonical_name = location
         # This part is for looking for matching cases (suggestion), uses the 
         # fuzzy logic to get the country name who get 80% of match rate.
         with open(os.path.join(os.path.dirname(__file__),'countries.csv'), 'r') as f:
             countries_data = csv.reader(f, delimiter= str(u','))
-            logger.debug('Location - %s: %s','not normalized', canonical_name)
+            logger.debug('Location - %s: %s not normalized', location_name, canonical_name)
             best_similarity = 80
             for country in countries_data:
                 unicode_row = [x.decode('utf8') for x in country]
                 country_name = unicode_row[0].lower().strip().replace(".", "")
                 similarity = fuzz.ratio(location_name, country_name)
-                if (similarity >= best_similarity):
+                if similarity >= best_similarity:
                     best_similarity = similarity
                     canonical_name = countries.get(unicode_row[3]).name
-                    logger.debug('Location - %s: %s','not normalized, using the most similar name', canonical_name)
+                    logger.debug('Location - %s: %s not normalized, using the most similar name',
+                     location_name, canonical_name)
+                else:
+                    capital = unicode_row[21].lower().strip().replace(".", "")
+                    similarity = fuzz.ratio(location_name, capital)
+                    if similarity >= best_similarity:
+                        best_similarity = similarity
+                        canonical_name = countries.get(unicode_row[3]).name
+                        logger.debug('Location - %s: %s not normalized, using the most similar capital name',
+                        location_name, canonical_name)
     
     return canonical_name
