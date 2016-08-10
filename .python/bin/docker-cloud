@@ -1,0 +1,10 @@
+#!/home/iara/processors/.python/bin/python2
+# EASY-INSTALL-ENTRY-SCRIPT: 'docker-cloud==1.0.6','console_scripts','docker-cloud'
+__requires__ = 'docker-cloud==1.0.6'
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.exit(
+        load_entry_point('docker-cloud==1.0.6', 'console_scripts', 'docker-cloud')()
+    )
