@@ -79,35 +79,32 @@ def write_location(conn, location, source_id, trial_id=None):
 
 #----helper function to get the canonical name of the locations
 def normalize_location(location):
-    _format_location = lambda x : x.lower().strip().replace(".","")
-    _max_index_and_value = lambda arr: max(enumerate(arr), key=lambda x: x[1])
-
-    country_name_index = 0
-    country_alpha_index = 3
-    country_capital_index = 21
+    base_similarity = 0
+    country_alpha = 3
     THRESHOLD = 80
 
-    location_name = _format_location(location)
+    _format_location = lambda x: x.decode('utf8').lower().strip().replace(".", "")
+    _max_index_and_value = lambda arr: max(enumerate(arr), key=lambda x: x[1])
 
+    location_name = _format_location(location)
     try:
-        canonical_name = countries.get(location_name).name
-        logger.debug('Location - %s: %s normalized using the lib', location_name, canonical_name)
+        location_name = countries.get(location_name).name
+        logger.debug('Location - %s: %s normalized using the lib', location, location_name)
     except KeyError:
-        with open(os.path.join(os.path.dirname(__file__),'countries.csv'), 'r') as f:
-            countries_data=[tuple(line) for line in csv.reader(f, delimiter=',')]
-            similarity_with_countries = [fuzz.ratio(location_name, _format_location(country[country_name_index]).decode('utf8')) for country in countries_data]
+        with open(os.path.join(os.path.dirname(__file__), 'countries.csv'), 'r') as f:
+            countries_data = [tuple(line) for line in csv.reader(f, delimiter=',')]
+            similarity_with_countries = [fuzz.ratio(location_name, _format_location(country[base_similarity])) for country in countries_data]
             max_index, max_value = _max_index_and_value(similarity_with_countries)
             if max_value >= THRESHOLD:
-                canonical_name = countries.get(countries_data[max_index][country_alpha_index]).name
-                logger.debug('Location - %s: %s normalized using country name similarity', location_name, canonical_name)
+                location_name = countries.get(countries_data[max_index][country_alpha]).name
+                logger.debug('Location - %s: %s normalized using country name similarity', location, location_name)
             else:
-                similarity_with_capitals = [fuzz.ratio(location_name, _format_location(country[country_capital_index])) for country in countries_data]
-                max_index, max_value = _max_index_and_value(similarity_with_countries)
+                base_similarity = 21
+                similarity_with_capitals = [fuzz.ratio(location_name, _format_location(country[base_similarity])) for country in countries_data]
+                max_index, max_value = _max_index_and_value(similarity_with_capitals)
                 if max_value >= THRESHOLD:
-                    canonical_name = countries.get(countries_data[max_index][country_alpha_index]).name
-                    logger.debug('Location - %s: %s normalized using capital name similarity', location_name, canonical_name)
+                    location_name = countries.get(countries_data[max_index][country_alpha]).name
+                    logger.debug('Location - %s: %s normalized using capital name similarity', location, location_name)
                 else:
-                    canonical_name = location
-                    logger.debug('Location - %s: %s not normalized', location_name, canonical_name)
-
-    return canonical_name
+                    logger.debug('Location - %s: %s not normalized', location, location_name)
+    return location_name
