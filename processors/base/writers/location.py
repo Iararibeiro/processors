@@ -8,10 +8,11 @@ import uuid
 import logging
 import datetime
 
-from iso3166 import countries
-from fuzzywuzzy import fuzz
 import os
 import csv
+
+from iso3166 import countries
+from fuzzywuzzy import fuzz
 
 from .. import readers
 from .. import helpers
@@ -77,7 +78,8 @@ def write_location(conn, location, source_id, trial_id=None):
 
     return object['id']
 
-#----helper function to get the canonical name of the locations
+
+# Helper function to get the canonical name of the locations
 def normalize_location(location):
     base_similarity = 0
     country_alpha = 3
@@ -106,5 +108,6 @@ def normalize_location(location):
                     location_name = countries.get(countries_data[max_index][country_alpha]).name
                     logger.debug('Location - %s: %s normalized using capital name similarity', location, location_name)
                 else:
+                    location_name = location
                     logger.debug('Location - %s: %s not normalized', location, location_name)
     return location_name
